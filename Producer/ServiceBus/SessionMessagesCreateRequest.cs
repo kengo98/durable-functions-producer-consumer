@@ -1,0 +1,11 @@
+﻿using System;
+
+namespace Producer.ServiceBus
+{
+    internal class SessionMessagesCreateRequest
+    {
+        public string SessionId { get; set; }
+        public int MessageId { get; set; }
+        public DateTime EnqueueTimeUtc { get; set; }
+    }
+}
