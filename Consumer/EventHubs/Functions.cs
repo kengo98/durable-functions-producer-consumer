@@ -35,7 +35,7 @@ namespace Consumer.EventHubs
                         { @"PartitionId", ehMessage.Properties[@"PartitionId"] },
                         { @"MessageId", ehMessage.Properties[@"MessageId"] },
                         { @"SystemEnqueuedTime", enqueuedTime },
-                        { @"ClientEnqueuedTime", ehMessage.Properties[@"EnqueueTimeUtc"] },
+                        { @"ClientEnqueuedTime", enqueuedTime },
                         { @"DequeuedTime", timestamp }
                     });
             }

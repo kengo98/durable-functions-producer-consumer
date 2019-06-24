@@ -126,9 +126,9 @@ namespace Producer.EventHubs
                     else
                     {
 #if DEBUG
-                        log.LogTrace($@"Posted message {messageToPost.Properties[@"MessageId"]} (Size: {messageToPost.Body.Count} bytes) for session '{messageToPost.Properties[@"PartitionId"]}' in {retryCount} attempt(s)");
+                        log.LogTrace($@"Posted message {messageToPost.Properties[@"MessageId"]} (Size: {messageToPost.Body.Count} bytes) for partition '{messageToPost.Properties[@"PartitionId"]}' in {retryCount} attempt(s)");
 #else
-                log.LogTrace($@"Posted message for session '{messageToPost.SessionId}' in {retryCount} attempt(s)");
+                log.LogTrace($@"Posted message for partition '{messageToPost.Properties[@"PartitionId"]}' in {retryCount} attempt(s)");
 #endif
                     }
                 } while (retry);
