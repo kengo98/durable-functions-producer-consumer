@@ -1,4 +1,20 @@
-This sample showcases how to produce and consume events to/from various Azure Messaging products using Azure Functions. It includes, as part of the consumption path, a logging of the time taken from initial queuing of the message to the final dequeueing and processing of the same message.
+---
+author: BrandonH-MSFT
+title: Produce & Consume messages through Service Bus, Event Hubs, and Storage Queues with Azure Functions
+description: This sample shows how to utilize Durable Functions' fan out pattern to load an arbitrary number of messages across any number of sessions/partitions in to Service Bus, Event Hubs, or Storage Queues. It also adds the ability to consume those messages with another Azure Function and load the resulting timing data in to another Event Hub for ingestion in to analytics services like Azure Data Explorer.
+topic: sample
+ms.topic: sample
+languages:
+  - csharp
+platforms: dotnet
+products:
+  - azure-functions
+  - azure-event-hubs
+  - azure-service-bus
+  - azure-storage
+services: functions, durablefunctions
+---
+This sample shows how to utilize Durable Functions' fan out pattern to load an arbitrary number of messages across any number of sessions/partitions in to Service Bus, Event Hubs, or Storage Queues. It also adds the ability to consume those messages with another Azure Function and load the resulting timing data in to another Event Hub for ingestion in to analytics services like Azure Data Explorer.
 
 > **Note**: Please use the `sample.local.settings.json` file as the baseline for `local.settings.json` when testing this sample locally.
 
