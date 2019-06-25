@@ -11,23 +11,43 @@ namespace Consumer.ServiceBus
 {
     public static class Functions
     {
-        [FunctionName(nameof(ServiceBusQueueProcessor))]
-        public static void ServiceBusQueueProcessor(
+        [FunctionName(nameof(ServiceBusQueueProcessorAsync))]
+        public static async Task ServiceBusQueueProcessorAsync(
             [ServiceBusTrigger(@"%ServiceBusQueueName%", Connection = @"ServiceBusConnection", IsSessionsEnabled = true)] Message sbMessage,
+            [EventHub(@"%CollectorEventHubName%", Connection = @"CollectorEventHubConnection")]IAsyncCollector<string> collector,
             ILogger log)
         {
             var timestamp = DateTime.UtcNow;
             log.LogTrace($@"[{sbMessage.UserProperties[@"TestRunId"]}]: Message received at {timestamp}: {JObject.FromObject(sbMessage).ToString()}");
 
             var enqueuedTime = sbMessage.ScheduledEnqueueTimeUtc;
+            var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
+
+            var collectorItem = new CollectorMessage
+            {
+                MessageProcessedTime = timestamp,
+                TestRun = sbMessage.UserProperties[@"TestRunId"].ToString(),
+                Trigger = @"ServiceBus",
+                Properties = new Dictionary<string, object>
+                {
+                    { "ElapsedTimeMs", elapsedTimeMs },
+                    { "ClientEnqueueTimeUtc", enqueuedTime },
+                    { "SystemEnqueuedTime", enqueuedTime },
+                    { "MessageId", sbMessage.MessageId },
+                    { "DequeuedTime", timestamp }
+                }
+            };
+
+            await collector.AddAsync(collectorItem.ToString());
+
             log.LogMetric("messageProcessTimeMs",
-                (timestamp - enqueuedTime).TotalMilliseconds,
+                elapsedTimeMs,
                 new Dictionary<string, object> {
                     { @"Session", sbMessage.SessionId },
                     { @"MessageNo", sbMessage.MessageId },
                     { @"EnqueuedTime", enqueuedTime },
                     { @"DequeuedTime", timestamp }
-                });
+});
         }
 
         [FunctionName(nameof(ClearDeadLetterServiceBusQueue))]

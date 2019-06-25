@@ -9,28 +9,46 @@ namespace Consumer.EventHubs
 {
     public static class Functions
     {
-        [FunctionName(nameof(EventHubProcessor))]
-        public static void EventHubProcessor(
+        [FunctionName(nameof(EventHubProcessorAsync))]
+        public static async System.Threading.Tasks.Task EventHubProcessorAsync(
             [EventHubTrigger(@"%EventHubName%", Connection = @"EventHubConnection")] EventData[] ehMessages,
+            [EventHub(@"%CollectorEventHubName%", Connection = @"CollectorEventHubConnection")]IAsyncCollector<string> collector,
             ILogger log)
         {
-            var timestamp = DateTime.UtcNow;
             foreach (var ehMessage in ehMessages)
             {
                 // replace 'body' property so output isn't ridiculous
                 var jsonMessage = JObject.FromObject(ehMessage);
+
+                var timestamp = DateTime.UtcNow;
+                var enqueuedTime = (DateTime)ehMessage.Properties[@"EnqueueTimeUtc"];
+                var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
+
+                var collectorItem = new CollectorMessage
+                {
+                    MessageProcessedTime = DateTime.UtcNow,
+                    TestRun = ehMessage.Properties[@"TestRunId"].ToString(),
+                    Trigger = @"EventHub",
+                    Properties = new Dictionary<string, object>
+                    {
+                        { "ElapsedTimeMs", elapsedTimeMs },
+                        { "ClientEnqueueTimeUtc", enqueuedTime },
+                        { "MessageId", ehMessage.Properties[@"MessageId"] },
+                        { "DequeuedTime", timestamp }
+                    }
+                };
+
+                await collector.AddAsync(collectorItem.ToString());
+
                 jsonMessage.Remove(@"Body");
                 jsonMessage.Add(@"Body", $@"{ehMessage.Body.Count} byte(s)");
 
-                var enqueuedTime = (DateTime)ehMessage.Properties[@"EnqueueTimeUtc"];
-                var elapsedTime = (timestamp - enqueuedTime).TotalMilliseconds;
-
-                jsonMessage.Add(@"_elapsedTimeMs", elapsedTime);
+                jsonMessage.Add(@"_elapsedTimeMs", elapsedTimeMs);
 
                 log.LogTrace($@"[{ehMessage.Properties[@"TestRunId"]}]: Message received at {timestamp}: {jsonMessage.ToString()}");
 
                 log.LogMetric("messageProcessTimeMs",
-                    elapsedTime,
+                    elapsedTimeMs,
                     new Dictionary<string, object> {
                         { @"PartitionId", ehMessage.Properties[@"PartitionId"] },
                         { @"MessageId", ehMessage.Properties[@"MessageId"] },

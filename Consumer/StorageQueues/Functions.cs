@@ -9,29 +9,45 @@ namespace Consumer.StorageQueues
 {
     public static class Functions
     {
-        [FunctionName(nameof(StorageQueueProcessor))]
-        public static void StorageQueueProcessor(
+        [FunctionName(nameof(StorageQueueProcessorAsync))]
+        public static async System.Threading.Tasks.Task StorageQueueProcessorAsync(
             [QueueTrigger(@"%StorageQueueName%", Connection = @"StorageQueueConnection")] CloudQueueMessage queueMessage,
+            [EventHub(@"%CollectorEventHubName%", Connection = @"CollectorEventHubConnection")]IAsyncCollector<string> collector,
             ILogger log)
         {
             var timestamp = DateTime.UtcNow;
-            // replace 'body' property so output isn't ridiculous
 
             var jsonMessage = JObject.FromObject(queueMessage);
             var jsonContent = JObject.Parse(queueMessage.AsString);
 
             var enqueuedTime = jsonContent.Value<DateTime>(@"EnqueueTimeUtc");
-            var elapsedTime = (timestamp - enqueuedTime).TotalMilliseconds;
+            var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
 
-            jsonMessage.Add(@"_elapsedTimeMs", elapsedTime);
+            var collectorItem = new CollectorMessage
+            {
+                MessageProcessedTime = DateTime.UtcNow,
+                TestRun = jsonContent.Value<string>(@"TestRunId"),
+                Trigger = @"Queue",
+                Properties = new Dictionary<string, object>
+                {
+                    { "ElapsedTimeMs", elapsedTimeMs },
+                    { "ClientEnqueueTimeUtc", enqueuedTime },
+                    { "SystemEnqueuedTime", queueMessage.InsertionTime },
+                    { "MessageId", jsonContent.Value<int>(@"MessageId") },
+                    { "DequeuedTime", timestamp }
+                }
+            };
 
+            await collector.AddAsync(collectorItem.ToString());
+
+            jsonMessage.Add(@"_elapsedTimeMs", elapsedTimeMs);
             log.LogTrace($@"[{jsonContent.Value<string>(@"TestRunId")}]: Message received at {timestamp}: {jsonMessage.ToString()}");
 
             log.LogMetric("messageProcessTimeMs",
-                elapsedTime,
+                elapsedTimeMs,
                 new Dictionary<string, object> {
                         { @"MessageId", jsonContent.Value<int>(@"MessageId") },
-                        { @"SystemEnqueuedTime", queueMessage.InsertionTime },
+                        { @"SystemEnqueuedTime", queueMessage.InsertionTime},
                         { @"ClientEnqueuedTime", enqueuedTime },
                         { @"DequeuedTime", timestamp }
                 });

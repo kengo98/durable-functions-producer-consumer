@@ -7,6 +7,8 @@
     "EventHubName": "incoming",
     "StorageQueueConnection": "DefaultEndpointsProtocol=https;AccountName=...",
     "StorageQueueName": "incoming",
+    "CollectorEventHubConnection": "Endpoint=sb://...no-entity-path",
+    "CollectorEventHubName": "collector",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true"
   }
