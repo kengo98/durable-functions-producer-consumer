@@ -25,7 +25,7 @@ namespace Consumer.StorageQueues
 
             jsonMessage.Add(@"_elapsedTimeMs", elapsedTime);
 
-            log.LogTrace($@"Message received at {timestamp}: {jsonMessage.ToString()}");
+            log.LogTrace($@"[{jsonContent.Value<string>(@"TestRunId")}]: Message received at {timestamp}: {jsonMessage.ToString()}");
 
             log.LogMetric("messageProcessTimeMs",
                 elapsedTime,

@@ -4,5 +4,6 @@
     {
         public string PartitionId { get; set; }
         public int NumberOfMessagesPerPartition { get; set; }
+        public string TestRunId { get; set; }
     }
 }

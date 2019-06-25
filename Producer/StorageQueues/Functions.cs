@@ -38,11 +38,12 @@ namespace Producer.StorageQueues
             var numOfMessages = ctx.GetInput<int>();
 
             var activities = Enumerable.Empty<Task<bool>>().ToList();
+            var testRunId = Guid.NewGuid().ToString();
             for (var i = 0; i < numOfMessages; i++)
             {
                 try
                 {
-                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), i));
+                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), (i, testRunId)));
                 }
                 catch (Exception ex)
                 {
@@ -68,7 +69,7 @@ namespace Producer.StorageQueues
             [Queue("%StorageQueueName%", Connection = @"StorageQueueConnection")]IAsyncCollector<JObject> queueMessages,
             ILogger log)
         {
-            var msgNum = ctx.GetInput<int>();
+            var msgDetails = ctx.GetInput<(int id, string runId)>();
             var retryCount = 0;
             var retry = false;
             do
@@ -77,7 +78,8 @@ namespace Producer.StorageQueues
                 {
                     Content = _messageContent.Value,
                     EnqueueTimeUtc = DateTime.UtcNow,
-                    MessageId = msgNum
+                    MessageId = msgDetails.id,
+                    TestRunId = msgDetails.runId
                 });
 
                 retryCount++;

@@ -17,7 +17,7 @@ namespace Consumer.ServiceBus
             ILogger log)
         {
             var timestamp = DateTime.UtcNow;
-            log.LogTrace($@"Message received at {timestamp}: {JObject.FromObject(sbMessage).ToString()}");
+            log.LogTrace($@"[{sbMessage.UserProperties[@"TestRunId"]}]: Message received at {timestamp}: {JObject.FromObject(sbMessage).ToString()}");
 
             var enqueuedTime = sbMessage.ScheduledEnqueueTimeUtc;
             log.LogMetric("messageProcessTimeMs",

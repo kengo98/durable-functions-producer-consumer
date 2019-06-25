@@ -27,12 +27,14 @@ namespace Producer.EventHubs
             var numberOfPartitions = inputObject.Value<int>(@"NumberOfPartitions");
 
             var orchestrationIds = new List<string>();
+            var testRunId = Guid.NewGuid().ToString();
             for (var c = 1; c <= numberOfPartitions; c++)
             {
                 var partitionKey = Guid.NewGuid().ToString();
                 var orchId = await client.StartNewAsync(nameof(GenerateMessagesForEventHubPartition),
                     new PartitionCreateRequest
                     {
+                        TestRunId = testRunId,
                         PartitionId = partitionKey,
                         NumberOfMessagesPerPartition = numberOfMessagesPerPartition,
                     });
@@ -61,6 +63,7 @@ namespace Producer.EventHubs
                             PartitionId = req.PartitionId,
                             MessageId = m,
                             EnqueueTimeUtc = enqueueTime,
+                            TestRunId = req.TestRunId
                         };
                     }).ToList();
 
@@ -97,6 +100,7 @@ namespace Producer.EventHubs
                     r.Properties.Add(@"MessageId", m.MessageId);
                     r.Properties.Add(@"PartitionId", m.PartitionId);
                     r.Properties.Add(@"EnqueueTimeUtc", m.EnqueueTimeUtc);
+                    r.Properties.Add(@"TestRunId", m.TestRunId);
 
                     return r;
                 }

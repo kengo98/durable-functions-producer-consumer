@@ -7,5 +7,6 @@ namespace Producer.EventHubs
         public string PartitionId { get; set; }
         public int MessageId { get; set; }
         public DateTime EnqueueTimeUtc { get; set; }
+        public string TestRunId { get; set; }
     }
 }

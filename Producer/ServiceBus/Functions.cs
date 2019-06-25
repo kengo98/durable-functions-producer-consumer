@@ -27,12 +27,14 @@ namespace Producer.ServiceBus
             var numberOfSessions = inputObject.Value<int>(@"NumberOfSessions");
 
             var orchestrationIds = new List<string>();
+            var testRunId = Guid.NewGuid().ToString();
             for (var c = 1; c <= numberOfSessions; c++)
             {
                 var sessionId = Guid.NewGuid().ToString();
                 var orchId = await client.StartNewAsync(nameof(GenerateMessagesForServiceBusSession),
                     new SessionCreateRequest
                     {
+                        TestRunId = testRunId,
                         SessionId = sessionId,
                         NumberOfMessagesPerSession = numberOfMessagesPerSession,
                     });
@@ -60,6 +62,7 @@ namespace Producer.ServiceBus
                             SessionId = req.SessionId,
                             MessageId = m,
                             EnqueueTimeUtc = DateTime.UtcNow,
+                            TestRunId = req.TestRunId
                         };
                     }).ToList();
 
@@ -91,14 +94,21 @@ namespace Producer.ServiceBus
         {
             var messages = ctx.GetInput<IEnumerable<SessionMessagesCreateRequest>>();
 
-            foreach (var messageToPost in messages.Select(m => new Message
+            foreach (var messageToPost in messages.Select(m =>
             {
-                Body = _messageContent.Value,
-                ContentType = @"text/plain",    // feel free to change this if your content is JSON (application/json), XML (application/xml), etc
-                CorrelationId = m.SessionId,
-                MessageId = $@"{m.SessionId}/{m.MessageId}",    // this property is used for de-duping
-                ScheduledEnqueueTimeUtc = m.EnqueueTimeUtc,
-                SessionId = m.SessionId,
+                var r = new Message
+                {
+                    Body = _messageContent.Value,
+                    ContentType = @"text/plain",    // feel free to change this if your content is JSON (application/json), XML (application/xml), etc
+                    CorrelationId = m.SessionId,
+                    MessageId = $@"{m.SessionId}/{m.MessageId}",    // this property is used for de-duping
+                    ScheduledEnqueueTimeUtc = m.EnqueueTimeUtc,
+                    SessionId = m.SessionId,
+                };
+
+                r.UserProperties.Add(@"TestRunId", m.TestRunId);
+
+                return r;
             }))
             {
                 var retryCount = 0;
