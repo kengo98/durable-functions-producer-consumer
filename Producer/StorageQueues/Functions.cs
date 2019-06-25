@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Producer.StorageQueues
@@ -22,12 +23,13 @@ namespace Producer.StorageQueues
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
             var numberOfMessages = inputObject.Value<int>(@"NumberOfMessages");
 
+            var testRunId = Guid.NewGuid().ToString();
             var orchId = await client.StartNewAsync(nameof(GenerateMessagesForStorageQueue),
-                    numberOfMessages);
+                    (numberOfMessages, testRunId));
 
             log.LogTrace($@"Kicked off {numberOfMessages} message creation...");
 
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, orchId, TimeSpan.FromMinutes(2));
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, JsonConvert.SerializeObject(new { TestRunId = testRunId }), TimeSpan.FromMinutes(2));
         }
 
         [FunctionName(nameof(GenerateMessagesForStorageQueue))]
@@ -35,15 +37,14 @@ namespace Producer.StorageQueues
             [OrchestrationTrigger]DurableOrchestrationContext ctx,
             ILogger log)
         {
-            var numOfMessages = ctx.GetInput<int>();
+            var req = ctx.GetInput<(int numOfMessages, string testRunId)>();
 
             var activities = Enumerable.Empty<Task<bool>>().ToList();
-            var testRunId = Guid.NewGuid().ToString();
-            for (var i = 0; i < numOfMessages; i++)
+            for (var i = 0; i < req.numOfMessages; i++)
             {
                 try
                 {
-                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), (i, testRunId)));
+                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), (i, req.testRunId)));
                 }
                 catch (Exception ex)
                 {

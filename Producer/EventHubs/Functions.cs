@@ -10,6 +10,7 @@ using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Producer.EventHubs
@@ -44,7 +45,7 @@ namespace Producer.EventHubs
                 orchestrationIds.Add(orchId);
             }
 
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, orchestrationIds.First(), TimeSpan.FromMinutes(2));
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, JsonConvert.SerializeObject(new { TestRunId = testRunId }), TimeSpan.FromMinutes(2));
         }
 
         [FunctionName(nameof(GenerateMessagesForEventHubPartition))]
