@@ -10,7 +10,6 @@ using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Producer.EventHubs
@@ -45,11 +44,11 @@ namespace Producer.EventHubs
                 orchestrationIds.Add(orchId);
             }
 
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, JsonConvert.SerializeObject(new { TestRunId = testRunId }), TimeSpan.FromMinutes(2));
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, orchestrationIds.First(), TimeSpan.FromMinutes(2));
         }
 
         [FunctionName(nameof(GenerateMessagesForEventHubPartition))]
-        public static async Task<bool> GenerateMessagesForEventHubPartition(
+        public static async Task<JObject> GenerateMessagesForEventHubPartition(
             [OrchestrationTrigger]DurableOrchestrationContext ctx,
             ILogger log)
         {
@@ -70,12 +69,14 @@ namespace Producer.EventHubs
 
             try
             {
-                return await ctx.CallActivityAsync<bool>(nameof(PostMessagesToEventHubPartition), messages);
+                return await ctx.CallActivityAsync<bool>(nameof(PostMessagesToEventHubPartition), messages)
+                    ? JObject.FromObject(new { req.TestRunId })
+                    : JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}" });
             }
             catch (Exception ex)
             {
-                log.LogError(ex, @"An error occurred queuing message generation to SB queue");
-                return false;
+                log.LogError(ex, @"An error occurred queuing message generation to Event Hub");
+                return JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}: {ex.ToString()}" });
             }
         }
 

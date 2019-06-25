@@ -29,11 +29,11 @@ namespace Producer.StorageQueues
 
             log.LogTrace($@"Kicked off {numberOfMessages} message creation...");
 
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, JsonConvert.SerializeObject(new { TestRunId = testRunId }), TimeSpan.FromMinutes(2));
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, orchId, TimeSpan.FromMinutes(2));
         }
 
         [FunctionName(nameof(GenerateMessagesForStorageQueue))]
-        public static async Task<bool> GenerateMessagesForStorageQueue(
+        public static async Task<JObject> GenerateMessagesForStorageQueue(
             [OrchestrationTrigger]DurableOrchestrationContext ctx,
             ILogger log)
         {
@@ -48,12 +48,14 @@ namespace Producer.StorageQueues
                 }
                 catch (Exception ex)
                 {
-                    log.LogError(ex, @"An error occurred queuing message generation to SB queue");
-                    return false;
+                    log.LogError(ex, @"An error occurred queuing message generation to Storage Queue");
+                    return JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}: {ex.ToString()}" });
                 }
             }
 
-            return (await Task.WhenAll(activities)).All(r => r);    // return 'true' if all are 'true', 'false' otherwise
+            return (await Task.WhenAll(activities)).All(r => r)    // return 'true' if all are 'true', 'false' otherwise
+                    ? JObject.FromObject(new { TestRunId = req.testRunId })
+                    : JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}" });
         }
 
         private const int MAX_RETRY_ATTEMPTS = 10;

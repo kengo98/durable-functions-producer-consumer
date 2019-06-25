@@ -10,7 +10,6 @@ using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Producer.ServiceBus
@@ -45,11 +44,11 @@ namespace Producer.ServiceBus
                 orchestrationIds.Add(orchId);
             }
 
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, JsonConvert.SerializeObject(new { TestRunId = testRunId }), TimeSpan.FromMinutes(2));
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(request, orchestrationIds.First(), TimeSpan.FromMinutes(2));
         }
 
         [FunctionName(nameof(GenerateMessagesForServiceBusSession))]
-        public static async Task<bool> GenerateMessagesForServiceBusSession(
+        public static async Task<JObject> GenerateMessagesForServiceBusSession(
             [OrchestrationTrigger]DurableOrchestrationContext ctx,
             ILogger log)
         {
@@ -69,12 +68,14 @@ namespace Producer.ServiceBus
 
             try
             {
-                return await ctx.CallActivityAsync<bool>(nameof(PostMessagesToServiceBusQueue), messages);
+                return await ctx.CallActivityAsync<bool>(nameof(PostMessagesToServiceBusQueue), messages)
+                    ? JObject.FromObject(new { req.TestRunId })
+                    : JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}" });
             }
             catch (Exception ex)
             {
                 log.LogError(ex, @"An error occurred queuing message generation to SB queue");
-                return false;
+                return JObject.FromObject(new { Error = $@"An error occurred executing orchestration {ctx.InstanceId}: {ex.ToString()}" });
             }
         }
 
