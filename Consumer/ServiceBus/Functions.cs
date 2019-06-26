@@ -11,6 +11,8 @@ namespace Consumer.ServiceBus
 {
     public static class Functions
     {
+        private static readonly string _instanceId = Guid.NewGuid().ToString();
+
         [FunctionName(nameof(ServiceBusQueueProcessorAsync))]
         public static async Task ServiceBusQueueProcessorAsync(
             [ServiceBusTrigger(@"%ServiceBusQueueName%", Connection = @"ServiceBusConnection", IsSessionsEnabled = true)] Message sbMessage,
@@ -30,11 +32,13 @@ namespace Consumer.ServiceBus
                 Trigger = @"ServiceBus",
                 Properties = new Dictionary<string, object>
                 {
-                    { "ElapsedTimeMs", elapsedTimeMs },
-                    { "ClientEnqueueTimeUtc", enqueuedTime },
-                    { "SystemEnqueuedTime", enqueuedTime },
-                    { "MessageId", sbMessage.MessageId },
-                    { "DequeuedTime", timestamp }
+                    { @"InstanceId", _instanceId },
+                    { @"ExecutionId", Guid.NewGuid().ToString() },
+                    { @"ElapsedTimeMs", elapsedTimeMs },
+                    { @"ClientEnqueueTimeUtc", enqueuedTime },
+                    { @"SystemEnqueuedTime", enqueuedTime },
+                    { @"MessageId", sbMessage.MessageId },
+                    { @"DequeuedTime", timestamp }
                 }
             };
 

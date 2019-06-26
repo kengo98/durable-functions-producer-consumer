@@ -9,6 +9,8 @@ namespace Consumer.EventHubs
 {
     public static class Functions
     {
+        private static readonly string _instanceId = Guid.NewGuid().ToString();
+
         [FunctionName(nameof(EventHubProcessorAsync))]
         public static async System.Threading.Tasks.Task EventHubProcessorAsync(
             [EventHubTrigger(@"%EventHubName%", Connection = @"EventHubConnection")] EventData[] ehMessages,
@@ -31,10 +33,12 @@ namespace Consumer.EventHubs
                     Trigger = @"EventHub",
                     Properties = new Dictionary<string, object>
                     {
-                        { "ElapsedTimeMs", elapsedTimeMs },
-                        { "ClientEnqueueTimeUtc", enqueuedTime },
-                        { "MessageId", ehMessage.Properties[@"MessageId"] },
-                        { "DequeuedTime", timestamp }
+                        { @"InstanceId", _instanceId },
+                        { @"ExecutionId", Guid.NewGuid().ToString() },
+                        { @"ElapsedTimeMs", elapsedTimeMs },
+                        { @"ClientEnqueueTimeUtc", enqueuedTime },
+                        { @"MessageId", ehMessage.Properties[@"MessageId"] },
+                        { @"DequeuedTime", timestamp }
                     }
                 };
 

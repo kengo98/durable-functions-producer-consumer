@@ -9,6 +9,8 @@ namespace Consumer.StorageQueues
 {
     public static class Functions
     {
+        private static readonly string _instanceId = Guid.NewGuid().ToString();
+
         [FunctionName(nameof(StorageQueueProcessorAsync))]
         public static async System.Threading.Tasks.Task StorageQueueProcessorAsync(
             [QueueTrigger(@"%StorageQueueName%", Connection = @"StorageQueueConnection")] CloudQueueMessage queueMessage,
@@ -30,11 +32,13 @@ namespace Consumer.StorageQueues
                 Trigger = @"Queue",
                 Properties = new Dictionary<string, object>
                 {
-                    { "ElapsedTimeMs", elapsedTimeMs },
-                    { "ClientEnqueueTimeUtc", enqueuedTime },
-                    { "SystemEnqueuedTime", queueMessage.InsertionTime },
-                    { "MessageId", jsonContent.Value<int>(@"MessageId") },
-                    { "DequeuedTime", timestamp }
+                    { @"InstanceId", _instanceId },
+                    { @"ExecutionId", Guid.NewGuid().ToString() },
+                    { @"ElapsedTimeMs", elapsedTimeMs },
+                    { @"ClientEnqueueTimeUtc", enqueuedTime },
+                    { @"SystemEnqueuedTime", queueMessage.InsertionTime },
+                    { @"MessageId", jsonContent.Value<int>(@"MessageId") },
+                    { @"DequeuedTime", timestamp }
                 }
             };
 
