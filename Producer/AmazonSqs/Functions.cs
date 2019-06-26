@@ -26,6 +26,12 @@ namespace Producer.AmazonSqs
             var numberOfMessagesPerGroup = inputObject.Value<int>(@"NumberOfMessagesPerGroup");
             var numberOfGroups = inputObject.Value<int>(@"NumberOfGroups");
 
+            var workTime = -1;
+            if (inputObject.TryGetValue(@"WorkTime", out var workTimeVal))
+            {
+                workTime = workTimeVal.Value<int>();
+            }
+
             var orchestrationIds = new List<string>();
             var testRunId = Guid.NewGuid().ToString();
             for (var c = 1; c <= numberOfGroups; c++)
@@ -37,6 +43,7 @@ namespace Producer.AmazonSqs
                         TestRunId = testRunId,
                         GroupId = groupId,
                         NumberOfMessagesPerGroup = numberOfMessagesPerGroup,
+                        ConsumerWorkTime = workTime,
                     });
 
                 log.LogTrace($@"Kicked off message creation for group {groupId}...");
@@ -62,7 +69,8 @@ namespace Producer.AmazonSqs
                             GroupId = req.GroupId,
                             MessageId = m,
                             EnqueueTimeUtc = DateTime.UtcNow,
-                            TestRunId = req.TestRunId
+                            TestRunId = req.TestRunId,
+                            ConsumerWorkTime = req.ConsumerWorkTime,
                         };
                     }).ToList();
 
@@ -118,25 +126,33 @@ namespace Producer.AmazonSqs
         {
             var messages = ctx.GetInput<IEnumerable<GroupMessagesCreateRequest>>();
 
-            foreach (var messageToPost in messages.Select(async m => new SendMessageRequest
+            foreach (var messageToPost in messages.Select(async m =>
             {
-                MessageBody = _messageContent.Value,
-                QueueUrl = await GetQueueUrl(),
-                //MessageGroupId = m.GroupId,
-                //MessageDeduplicationId = $@"{m.GroupId}/{m.MessageId}",
-                MessageAttributes = new Dictionary<string, MessageAttributeValue>
+                var r = new SendMessageRequest
+                {
+                    MessageBody = _messageContent.Value,
+                    QueueUrl = await GetQueueUrl(),
+                    MessageAttributes = new Dictionary<string, MessageAttributeValue>
                     {
                         { @"TestRunId", new MessageAttributeValue { DataType = @"String", StringValue = m.TestRunId } },
                         { @"GroupId", new MessageAttributeValue { DataType = @"String", StringValue = m.GroupId } },
                         { @"MessageId", new MessageAttributeValue { DataType = @"Number", StringValue = m.MessageId.ToString() } },
                         { @"ScheduledEnqueueTimeUtc", new MessageAttributeValue { DataType = @"String", StringValue = m.EnqueueTimeUtc.ToLongTimeString() } },
                     }
-            }
-            ))
+                };
+
+                if (m.ConsumerWorkTime > 0)
+                {
+                    r.MessageAttributes.Add(@"workTime", new MessageAttributeValue { DataType = @"Number", StringValue = m.ConsumerWorkTime.ToString() });
+                }
+
+                return r;
+            }))
             {
                 var retryCount = 0;
                 var retry = false;
                 var msg = await messageToPost;
+
                 do
                 {
                     retryCount++;

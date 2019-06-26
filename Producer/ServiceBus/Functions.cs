@@ -26,6 +26,12 @@ namespace Producer.ServiceBus
             var numberOfMessagesPerSession = inputObject.Value<int>(@"NumberOfMessagesPerSession");
             var numberOfSessions = inputObject.Value<int>(@"NumberOfSessions");
 
+            var workTime = -1;
+            if (inputObject.TryGetValue(@"WorkTime", out var workTimeVal))
+            {
+                workTime = workTimeVal.Value<int>();
+            }
+
             var orchestrationIds = new List<string>();
             var testRunId = Guid.NewGuid().ToString();
             for (var c = 1; c <= numberOfSessions; c++)
@@ -37,6 +43,7 @@ namespace Producer.ServiceBus
                         TestRunId = testRunId,
                         SessionId = sessionId,
                         NumberOfMessagesPerSession = numberOfMessagesPerSession,
+                        ConsumerWorkTime = workTime,
                     });
 
                 log.LogTrace($@"Kicked off message creation for session {sessionId}...");
@@ -62,7 +69,8 @@ namespace Producer.ServiceBus
                             SessionId = req.SessionId,
                             MessageId = m,
                             EnqueueTimeUtc = DateTime.UtcNow,
-                            TestRunId = req.TestRunId
+                            TestRunId = req.TestRunId,
+                            ConsumerWorkTime = req.ConsumerWorkTime,
                         };
                     }).ToList();
 
@@ -109,6 +117,11 @@ namespace Producer.ServiceBus
                 };
 
                 r.UserProperties.Add(@"TestRunId", m.TestRunId);
+
+                if (m.ConsumerWorkTime > 0)
+                {
+                    r.UserProperties.Add(@"workTime", m.ConsumerWorkTime);
+                }
 
                 return r;
             }))

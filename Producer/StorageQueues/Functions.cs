@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Producer.StorageQueues
@@ -23,9 +22,15 @@ namespace Producer.StorageQueues
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
             var numberOfMessages = inputObject.Value<int>(@"NumberOfMessages");
 
+            var workTime = -1;
+            if (inputObject.TryGetValue(@"WorkTime", out var workTimeVal))
+            {
+                workTime = workTimeVal.Value<int>();
+            }
+
             var testRunId = Guid.NewGuid().ToString();
             var orchId = await client.StartNewAsync(nameof(GenerateMessagesForStorageQueue),
-                    (numberOfMessages, testRunId));
+                    (numberOfMessages, testRunId, workTime));
 
             log.LogTrace($@"Kicked off {numberOfMessages} message creation...");
 
@@ -37,14 +42,14 @@ namespace Producer.StorageQueues
             [OrchestrationTrigger]DurableOrchestrationContext ctx,
             ILogger log)
         {
-            var req = ctx.GetInput<(int numOfMessages, string testRunId)>();
+            var req = ctx.GetInput<(int numOfMessages, string testRunId, int workTime)>();
 
             var activities = Enumerable.Empty<Task<bool>>().ToList();
             for (var i = 0; i < req.numOfMessages; i++)
             {
                 try
                 {
-                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), (i, req.testRunId)));
+                    activities.Add(ctx.CallActivityAsync<bool>(nameof(PostMessageToStorageQueue), (i, req.testRunId, req.workTime)));
                 }
                 catch (Exception ex)
                 {
@@ -72,19 +77,25 @@ namespace Producer.StorageQueues
             [Queue("%StorageQueueName%", Connection = @"StorageQueueConnection")]IAsyncCollector<JObject> queueMessages,
             ILogger log)
         {
-            var msgDetails = ctx.GetInput<(int id, string runId)>();
+            var msgDetails = ctx.GetInput<(int id, string runId, int workTime)>();
             var retryCount = 0;
             var retry = false;
+
+            var messageToPost = JObject.FromObject(new
+            {
+                Content = _messageContent.Value,
+                EnqueueTimeUtc = DateTime.UtcNow,
+                MessageId = msgDetails.id,
+                TestRunId = msgDetails.runId
+            });
+
+            if (msgDetails.workTime > 0)
+            {
+                messageToPost.Add(@"workTime", msgDetails.workTime);
+            }
+
             do
             {
-                var messageToPost = JObject.FromObject(new
-                {
-                    Content = _messageContent.Value,
-                    EnqueueTimeUtc = DateTime.UtcNow,
-                    MessageId = msgDetails.id,
-                    TestRunId = msgDetails.runId
-                });
-
                 retryCount++;
                 try
                 {
