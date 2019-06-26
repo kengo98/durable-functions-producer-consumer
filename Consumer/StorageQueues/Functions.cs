@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -24,6 +25,11 @@ namespace Consumer.StorageQueues
 
             var enqueuedTime = jsonContent.Value<DateTime>(@"EnqueueTimeUtc");
             var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
+
+            if (jsonContent.TryGetValue(@"workTime", out var workTime))
+            {
+                await Task.Delay(workTime.Value<int>());
+            }
 
             var collectorItem = new CollectorMessage
             {

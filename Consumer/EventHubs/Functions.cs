@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,11 @@ namespace Consumer.EventHubs
                 var timestamp = DateTime.UtcNow;
                 var enqueuedTime = (DateTime)ehMessage.Properties[@"EnqueueTimeUtc"];
                 var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
+
+                if (ehMessage.Properties.TryGetValue(@"workTime", out var value))
+                {
+                    await Task.Delay((int)value);
+                }
 
                 var collectorItem = new CollectorMessage
                 {

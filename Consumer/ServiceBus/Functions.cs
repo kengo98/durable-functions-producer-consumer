@@ -25,6 +25,11 @@ namespace Consumer.ServiceBus
             var enqueuedTime = sbMessage.ScheduledEnqueueTimeUtc;
             var elapsedTimeMs = (timestamp - enqueuedTime).TotalMilliseconds;
 
+            if (sbMessage.UserProperties.TryGetValue(@"workTime", out var workTime))
+            {
+                await Task.Delay((int)workTime);
+            }
+
             var collectorItem = new CollectorMessage
             {
                 MessageProcessedTime = timestamp,
