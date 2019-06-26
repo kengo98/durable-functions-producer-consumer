@@ -2,11 +2,11 @@
   "IsEncrypted": false,
   "Values": {
     "ServiceBusConnection": "Endpoint=sb://...no-entity-path",
-    "ServiceBusQueueName": "incoming",
+    "ServiceBusQueueName": "...",
     "EventHubConnection": "Endpoint=sb://...no-entity-path",
-    "EventHubName": "incoming",
+    "EventHubName": "...",
     "StorageQueueConnection": "DefaultEndpointsProtocol=https;AccountName=...",
-    "StorageQueueName": "incoming",
+    "StorageQueueName": "...",
 
     "AWS_ACCESS_KEY_ID": "...",
     "AWS_SECRET_ACCESS_KEY": "...",
