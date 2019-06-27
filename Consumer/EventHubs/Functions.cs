@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.EventHubs;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-
 namespace Consumer.EventHubs
 {
     public static class Functions
@@ -44,7 +36,8 @@ namespace Consumer.EventHubs
                         { @"ElapsedTimeMs", elapsedTimeMs },
                         { @"ClientEnqueueTimeUtc", enqueuedTime },
                         { @"MessageId", ehMessage.Properties[@"MessageId"] },
-                        { @"DequeuedTime", timestamp }
+                        { @"DequeuedTime", timestamp },
+                        { @"Language", @"csharp" },
                     }
                 };
 
@@ -64,7 +57,8 @@ namespace Consumer.EventHubs
                         { @"MessageId", ehMessage.Properties[@"MessageId"] },
                         { @"SystemEnqueuedTime", enqueuedTime },
                         { @"ClientEnqueuedTime", enqueuedTime },
-                        { @"DequeuedTime", timestamp }
+                        { @"DequeuedTime", timestamp },
+                        { @"Language", @"csharp" },
                     });
             }
         }

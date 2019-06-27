@@ -1,12 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-
 namespace Consumer.ServiceBus
 {
     public static class Functions
@@ -43,7 +34,8 @@ namespace Consumer.ServiceBus
                     { @"ClientEnqueueTimeUtc", enqueuedTime },
                     { @"SystemEnqueuedTime", enqueuedTime },
                     { @"MessageId", sbMessage.MessageId },
-                    { @"DequeuedTime", timestamp }
+                    { @"DequeuedTime", timestamp },
+                    { @"Language", @"csharp" },
                 }
             };
 
@@ -55,8 +47,9 @@ namespace Consumer.ServiceBus
                     { @"Session", sbMessage.SessionId },
                     { @"MessageNo", sbMessage.MessageId },
                     { @"EnqueuedTime", enqueuedTime },
-                    { @"DequeuedTime", timestamp }
-});
+                    { @"DequeuedTime", timestamp },
+                    { @"Language", @"csharp" },
+                });
         }
 
         [FunctionName(nameof(ClearDeadLetterServiceBusQueue))]

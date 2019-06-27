@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json.Linq;
-
 namespace Consumer.StorageQueues
 {
     public static class Functions
@@ -44,7 +36,8 @@ namespace Consumer.StorageQueues
                     { @"ClientEnqueueTimeUtc", enqueuedTime },
                     { @"SystemEnqueuedTime", queueMessage.InsertionTime },
                     { @"MessageId", jsonContent.Value<int>(@"MessageId") },
-                    { @"DequeuedTime", timestamp }
+                    { @"DequeuedTime", timestamp },
+                    { @"Language", @"csharp" },
                 }
             };
 
@@ -59,7 +52,8 @@ namespace Consumer.StorageQueues
                         { @"MessageId", jsonContent.Value<int>(@"MessageId") },
                         { @"SystemEnqueuedTime", queueMessage.InsertionTime},
                         { @"ClientEnqueuedTime", enqueuedTime },
-                        { @"DequeuedTime", timestamp }
+                        { @"DequeuedTime", timestamp },
+                        { @"Language", @"csharp" },
                 });
         }
     }
