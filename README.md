@@ -1,8 +1,12 @@
 ---
 author: BrandonH-MSFT
+ms.author: hurlburb
 title: 'Produce & Consume messages through Service Bus, Event Hubs, and Storage Queues with Azure Functions'
-description: "This sample shows how to utilize Durable Functions' fan out pattern to load an arbitrary number of messages across any number of sessions/partitions in to Service Bus, Event Hubs, or Storage Queues. It also adds the ability to consume those messages with another Azure Function and load the resulting timing data in to another Event Hub for ingestion in to analytics services like Azure Data Explorer."
+name: 'Produce & Consume messages through Service Bus, Event Hubs, and Storage Queues with Azure Functions'
+description: "Uses Durable Functions' fan out pattern to load N messages across M sessions in to Service Bus, Event Hubs, or Storage Queues. Includes the ability to consume the messages with another Azure Function & load timing data in to Event Hubs for ingestion in to analytics services like Azure Data Explorer"
 topic: sample
+page_type: sample
+ms.topic: sample
 languages:
   - csharp
 products:
@@ -10,7 +14,9 @@ products:
   - azure-event-hubs
   - azure-service-bus
   - azure-storage
+ms.date: 06/26/2019
 ---
+
 # Produce & Consume messages through Service Bus, Event Hubs, and Storage Queues with Durable Functions
 
 This sample shows how to utilize Durable Functions' fan out pattern to load an arbitrary number of messages across any number of sessions/partitions in to Service Bus, Event Hubs, or Storage Queues. It also adds the ability to consume those messages with another Azure Function and load the resulting timing data in to another Event Hub for ingestion in to analytics services like Azure Data Explorer.
