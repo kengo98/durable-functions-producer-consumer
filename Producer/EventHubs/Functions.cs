@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -19,7 +20,7 @@ namespace Producer.EventHubs
         [FunctionName(nameof(PostToEventHub))]
         public static async Task<HttpResponseMessage> PostToEventHub(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage request,
-            [OrchestrationClient]DurableOrchestrationClient client,
+            [DurableClient]IDurableOrchestrationClient client,
             ILogger log)
         {
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
@@ -56,7 +57,7 @@ namespace Producer.EventHubs
 
         [FunctionName(nameof(GenerateMessagesForEventHubPartition))]
         public static async Task<JObject> GenerateMessagesForEventHubPartition(
-            [OrchestrationTrigger]DurableOrchestrationContext ctx,
+            [OrchestrationTrigger]IDurableOrchestrationContext ctx,
             ILogger log)
         {
             var req = ctx.GetInput<PartitionCreateRequest>();
@@ -98,7 +99,7 @@ namespace Producer.EventHubs
         });
 
         [FunctionName(nameof(PostMessagesToEventHubPartition))]
-        public static async Task<bool> PostMessagesToEventHubPartition([ActivityTrigger]DurableActivityContext ctx,
+        public static async Task<bool> PostMessagesToEventHubPartition([ActivityTrigger]IDurableActivityContext ctx,
             [EventHub("%EventHubName%", Connection = @"EventHubConnection")]IAsyncCollector<EventData> queueMessages,
             ILogger log)
         {

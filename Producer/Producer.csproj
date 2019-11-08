@@ -16,12 +16,12 @@
     <EmbeddedResource Include="messagecontent.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SQS" Version="3.3.100.37" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.3.102.28" />
     <PackageReference Include="Google.Cloud.PubSub.V1" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="1.8.2" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventHubs" Version="3.0.5" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.ServiceBus" Version="3.0.5" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.6" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventHubs" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.ServiceBus" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.10" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.29" />
   </ItemGroup>
   <ItemGroup>

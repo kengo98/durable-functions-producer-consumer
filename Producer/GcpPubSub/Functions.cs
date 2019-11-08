@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Google.Cloud.PubSub.V1;
 using Google.Protobuf;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -20,7 +21,7 @@ namespace Producer.GcpPubSub
         [FunctionName(nameof(PostToPubSub))]
         public static async Task<HttpResponseMessage> PostToPubSub(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage request,
-            [OrchestrationClient]DurableOrchestrationClient client,
+            [DurableClient]IDurableOrchestrationClient client,
             ILogger log)
         {
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
@@ -39,7 +40,7 @@ namespace Producer.GcpPubSub
 
             var testRunId = Guid.NewGuid().ToString();
             var orchId = await client.StartNewAsync(nameof(GenerateMessagesForPubSub),
-                    (numberOfMessages, testRunId, workTime));
+                    Tuple.Create(numberOfMessages, testRunId, workTime));
 
             log.LogTrace($@"Kicked off {numberOfMessages} message creation...");
 
@@ -48,7 +49,7 @@ namespace Producer.GcpPubSub
 
         [FunctionName(nameof(GenerateMessagesForPubSub))]
         public static async Task<JObject> GenerateMessagesForPubSub(
-            [OrchestrationTrigger]DurableOrchestrationContext ctx,
+            [OrchestrationTrigger]IDurableOrchestrationContext ctx,
             ILogger log)
         {
             var req = ctx.GetInput<(int numOfMessages, string testRunId, int workTime)>();
@@ -82,7 +83,7 @@ namespace Producer.GcpPubSub
         });
 
         [FunctionName(nameof(PostMessageToPubSub))]
-        public static async Task<bool> PostMessageToPubSub([ActivityTrigger]DurableActivityContext ctx,
+        public static async Task<bool> PostMessageToPubSub([ActivityTrigger]IDurableActivityContext ctx,
             ILogger log)
         {
             var msgDetails = ctx.GetInput<(int id, string runId, int workTime)>();

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -19,7 +20,7 @@ namespace Producer.AmazonSqs
         [FunctionName(nameof(PostToSimpleQueue))]
         public static async Task<HttpResponseMessage> PostToSimpleQueue(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage request,
-            [OrchestrationClient]DurableOrchestrationClient client,
+            [DurableClient]IDurableOrchestrationClient client,
             ILogger log)
         {
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
@@ -56,7 +57,7 @@ namespace Producer.AmazonSqs
 
         [FunctionName(nameof(GenerateMessagesForSqsGroup))]
         public static async Task<JObject> GenerateMessagesForSqsGroup(
-            [OrchestrationTrigger]DurableOrchestrationContext ctx,
+            [OrchestrationTrigger]IDurableOrchestrationContext ctx,
             ILogger log)
         {
             var req = ctx.GetInput<GroupCreateRequest>();
@@ -121,7 +122,7 @@ namespace Producer.AmazonSqs
         }
 
         [FunctionName(nameof(PostMessagesToSimpleQueue))]
-        public static async Task<bool> PostMessagesToSimpleQueue([ActivityTrigger]DurableActivityContext ctx,
+        public static async Task<bool> PostMessagesToSimpleQueue([ActivityTrigger]IDurableActivityContext ctx,
             ILogger log)
         {
             var messages = ctx.GetInput<IEnumerable<GroupMessagesCreateRequest>>();

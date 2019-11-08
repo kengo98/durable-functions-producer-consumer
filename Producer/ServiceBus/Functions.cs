@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -19,7 +20,7 @@ namespace Producer.ServiceBus
         [FunctionName(nameof(PostToServiceBusQueue))]
         public static async Task<HttpResponseMessage> PostToServiceBusQueue(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage request,
-            [OrchestrationClient]DurableOrchestrationClient client,
+            [DurableClient]IDurableOrchestrationClient client,
             ILogger log)
         {
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
@@ -56,7 +57,7 @@ namespace Producer.ServiceBus
 
         [FunctionName(nameof(GenerateMessagesForServiceBusSession))]
         public static async Task<JObject> GenerateMessagesForServiceBusSession(
-            [OrchestrationTrigger]DurableOrchestrationContext ctx,
+            [OrchestrationTrigger]IDurableOrchestrationContext ctx,
             ILogger log)
         {
             var req = ctx.GetInput<SessionCreateRequest>();
@@ -98,7 +99,7 @@ namespace Producer.ServiceBus
         private const int MAX_RETRY_ATTEMPTS = 10;
 
         [FunctionName(nameof(PostMessagesToServiceBusQueue))]
-        public static async Task<bool> PostMessagesToServiceBusQueue([ActivityTrigger]DurableActivityContext ctx,
+        public static async Task<bool> PostMessagesToServiceBusQueue([ActivityTrigger]IDurableActivityContext ctx,
             [ServiceBus("%ServiceBusQueueName%", Connection = @"ServiceBusConnection")]IAsyncCollector<Message> queueMessages,
             ILogger log)
         {

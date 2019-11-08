@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -16,7 +17,7 @@ namespace Producer.StorageQueues
         [FunctionName(nameof(PostToStorageQueue))]
         public static async Task<HttpResponseMessage> PostToStorageQueue(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage request,
-            [OrchestrationClient]DurableOrchestrationClient client,
+            [DurableClient]IDurableOrchestrationClient client,
             ILogger log)
         {
             var inputObject = JObject.Parse(await request.Content.ReadAsStringAsync());
@@ -30,7 +31,7 @@ namespace Producer.StorageQueues
 
             var testRunId = Guid.NewGuid().ToString();
             var orchId = await client.StartNewAsync(nameof(GenerateMessagesForStorageQueue),
-                    (numberOfMessages, testRunId, workTime));
+                    Tuple.Create(numberOfMessages, testRunId, workTime));
 
             log.LogTrace($@"Kicked off {numberOfMessages} message creation...");
 
@@ -39,7 +40,7 @@ namespace Producer.StorageQueues
 
         [FunctionName(nameof(GenerateMessagesForStorageQueue))]
         public static async Task<JObject> GenerateMessagesForStorageQueue(
-            [OrchestrationTrigger]DurableOrchestrationContext ctx,
+            [OrchestrationTrigger]IDurableOrchestrationContext ctx,
             ILogger log)
         {
             var req = ctx.GetInput<(int numOfMessages, string testRunId, int workTime)>();
@@ -73,7 +74,7 @@ namespace Producer.StorageQueues
         });
 
         [FunctionName(nameof(PostMessageToStorageQueue))]
-        public static async Task<bool> PostMessageToStorageQueue([ActivityTrigger]DurableActivityContext ctx,
+        public static async Task<bool> PostMessageToStorageQueue([ActivityTrigger]IDurableActivityContext ctx,
             [Queue("%StorageQueueName%", Connection = @"StorageQueueConnection")]IAsyncCollector<JObject> queueMessages,
             ILogger log)
         {
