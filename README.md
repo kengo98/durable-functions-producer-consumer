@@ -23,6 +23,8 @@ This sample shows how to utilize Durable Functions' fan out pattern to load an a
 
 > **Note**: Please use the `sample.local.settings.json` file as the baseline for `local.settings.json` when testing this sample locally.
 
+> **Note**: You are viewing the v2.x branch of this sample which is compatible with the 2.x breaking changes to the Durable Functions package
+
 ## Service Bus
 ```
 POST /api/PostToServiceBusQueue HTTP/1.1
